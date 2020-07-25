@@ -303,7 +303,6 @@ func (p *Parser) parseLoadStatement() *ast.LoadStatement {
 	return stmt
 }
 
-
 func (p *Parser) parseStoreStatement() *ast.StoreStatement {
 	stmt := &ast.StoreStatement{Token: p.curTok}
 
@@ -318,5 +317,5 @@ func (p *Parser) parseStoreStatement() *ast.StoreStatement {
 	p.curTok.Type = operand
 	stmt.Value = p.parseExpression()
 
-	return  stmt
+	return stmt
 }

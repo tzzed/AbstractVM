@@ -27,6 +27,10 @@ func (p *Program) TokenLiteral() string {
 	return ""
 }
 
+func (p *Program) String() string {
+	return p.TokenLiteral()
+}
+
 type Expression interface {
 	Node
 	expressionNode()
@@ -244,7 +248,6 @@ func (ls *LoadStatement) String() string {
 	return out.String()
 }
 
-
 type StoreStatement struct {
 	Token token.Token // the token.LET token
 	Name  *Identifier
@@ -271,4 +274,3 @@ func (ss *StoreStatement) String() string {
 	out.WriteString(token.RPAREN)
 	return out.String()
 }
-

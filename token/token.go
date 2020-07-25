@@ -68,10 +68,10 @@ var keywords = map[string]TokenType{
 	"exit":   EXIT,
 	"mod":    MOD,
 	"print":  PRINT,
-	"int8": INT8,
-	"int16": INT16,
-	"int32": INT32,
-	"float": FLOAT,
+	"int8":   INT8,
+	"int16":  INT16,
+	"int32":  INT32,
+	"float":  FLOAT,
 	"double": DOUBLE,
 }
 

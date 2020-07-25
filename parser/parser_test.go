@@ -35,7 +35,6 @@ func TestStoreStatement(t *testing.T) {
 	}
 }
 
-
 func TestLoadStatement(t *testing.T) {
 	tests := []struct {
 		input              string
