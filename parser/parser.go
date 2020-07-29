@@ -96,6 +96,8 @@ func (p *Parser) parseStatement() ast.Statement {
 		return p.parseLoadStatement()
 	case token.STORE:
 		return p.parseStoreStatement()
+	case token.ADD:
+		return p.parseAddStatement()
 	default:
 		if token.IsIdent(p.curTok.Literal) {
 			return p.parseInstructionStatement()
@@ -317,5 +319,21 @@ func (p *Parser) parseStoreStatement() *ast.StoreStatement {
 	p.curTok.Type = operand
 	stmt.Value = p.parseExpression()
 
+	return stmt
+}
+
+func (p *Parser) parseAddStatement() *ast.AddStatement {
+	stmt := &ast.AddStatement{Token: p.curTok}
+
+	p.nextToken()
+	operand := LookupOperand(p.curTok.Literal)
+	stmt.Name = &ast.Identifier{Token: p.curTok, Value: p.curTok.Literal}
+	if !p.expectPeek(token.LPAREN) {
+		return nil
+	}
+
+	p.nextToken()
+	p.curTok.Type = operand
+	fmt.Println("stmt == ", stmt)
 	return stmt
 }

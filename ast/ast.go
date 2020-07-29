@@ -274,3 +274,22 @@ func (ss *StoreStatement) String() string {
 	out.WriteString(token.RPAREN)
 	return out.String()
 }
+
+type AddStatement struct {
+	Token token.Token // the token.LET token
+	Name  *Identifier
+}
+
+func (as *AddStatement) statementNode() {}
+
+func (as *AddStatement) TokenLiteral() string {
+	return as.Token.Literal
+}
+
+func (as *AddStatement) String() string {
+	var out bytes.Buffer
+
+	out.WriteString(as.TokenLiteral())
+
+	return out.String()
+}
