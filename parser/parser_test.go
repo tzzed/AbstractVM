@@ -9,58 +9,6 @@ import (
 	"testing"
 )
 
-func TestStoreStatement(t *testing.T) {
-	tests := []struct {
-		input              string
-		expectedIdentifier string
-		expectedValue      interface{}
-	}{
-		{"store int8(42)", "int8", int8(42)},
-		{"store int16(42)", "int16", int16(42)},
-		{"store int32(42)", "int32", int32(42)},
-		{"store float(42.42)", "float", float32(42.42)},
-		{"store double(42.42)", "double", 42.42},
-	}
-
-	for _, tt := range tests {
-		l := lexer.New(tt.input)
-		p := New(l)
-		program := p.ParseProgram()
-
-		stmt := program.Statements[0]
-		testStoreStatement(t, stmt, tt.expectedIdentifier)
-
-		val := stmt.(*ast.StoreStatement).Value
-		testLiteralExpression(t, val, tt.expectedValue)
-	}
-}
-
-func TestLoadStatement(t *testing.T) {
-	tests := []struct {
-		input              string
-		expectedIdentifier string
-		expectedValue      interface{}
-	}{
-		{"load int8(42)", "int8", int8(42)},
-		{"load int16(42)", "int16", int16(42)},
-		{"load int32(42)", "int32", int32(42)},
-		{"load float(42.42)", "float", float32(42.42)},
-		{"load double(42.42)", "double", 42.42},
-	}
-
-	for _, tt := range tests {
-		l := lexer.New(tt.input)
-		p := New(l)
-		program := p.ParseProgram()
-
-		stmt := program.Statements[0]
-		testLoadStatement(t, stmt, tt.expectedIdentifier)
-
-		val := stmt.(*ast.LoadStatement).Value
-		testLiteralExpression(t, val, tt.expectedValue)
-	}
-}
-
 func TestAssertStatement(t *testing.T) {
 	tests := []struct {
 		input              string
@@ -89,16 +37,16 @@ func TestAssertStatement(t *testing.T) {
 
 func TestInstructionsStatement(t *testing.T) {
 	tests := []struct {
-		input         string
-		expectedIdent string
+		input string
+		want  string
 	}{
 		{
-			"add",
-			"add",
+			input: "pop",
+			want:  "pop",
 		},
 		{
-			"pop",
-			"pop",
+			"add",
+			"add",
 		},
 		{
 			"dump",
@@ -144,13 +92,8 @@ func TestInstructionsStatement(t *testing.T) {
 	for _, tt := range tests {
 		l := lexer.New(tt.input)
 		p := New(l)
-		program := p.ParseProgram()
-
-		stmt := program.Statements[0]
-		n := stmt.(*ast.InstructionStatement).Name
-		if !testLiteralExpression(t, n, tt.expectedIdent) {
-			return
-		}
+		stmt := p.parseInstructionStatement()
+		require.Equal(t, tt.want, stmt.TokenLiteral())
 	}
 }
 
@@ -197,22 +140,6 @@ func testPushStatement(t *testing.T, s ast.Statement, name string) bool {
 func testAssertStatement(t *testing.T, s ast.Statement, name string) {
 	require.Equal(t, "assert", s.TokenLiteral())
 	asStmt, ok := s.(*ast.AssertStatement)
-	require.True(t, ok)
-	require.Equal(t, name, asStmt.Name.Value)
-	require.Equal(t, name, asStmt.Name.TokenLiteral())
-}
-
-func testLoadStatement(t *testing.T, s ast.Statement, name string) {
-	require.Equal(t, "load", s.TokenLiteral())
-	asStmt, ok := s.(*ast.LoadStatement)
-	require.True(t, ok)
-	require.Equal(t, name, asStmt.Name.Value)
-	require.Equal(t, name, asStmt.Name.TokenLiteral())
-}
-
-func testStoreStatement(t *testing.T, s ast.Statement, name string) {
-	require.Equal(t, "store", s.TokenLiteral())
-	asStmt, ok := s.(*ast.StoreStatement)
 	require.True(t, ok)
 	require.Equal(t, name, asStmt.Name.Value)
 	require.Equal(t, name, asStmt.Name.TokenLiteral())

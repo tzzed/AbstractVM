@@ -19,7 +19,7 @@ func printParserErrors(out io.Writer, errors []string) {
 
 func Start(in io.Reader, out io.Writer) {
 	scanner := bufio.NewScanner(in)
-	st := evaluator.New()
+	st := evaluator.NewStack()
 	for {
 		_, _ = fmt.Fprintf(out, PROMPT)
 		scanned := scanner.Scan()
@@ -41,7 +41,7 @@ func Start(in io.Reader, out io.Writer) {
 			fmt.Println(err)
 			return
 		} else {
-			st.Print()
+			st.Dump()
 		}
 
 	}

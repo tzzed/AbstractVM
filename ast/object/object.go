@@ -7,12 +7,9 @@ type ObjectType string
 const (
 	INTEGER_OBJ = "INTEGER"
 	BYTE_OBJ    = " INT8"
-	SHORT_OBJ = "INT16"
-	FLOAT_OBJ = "FLOAT32"
-<<<<<<< HEAD
-	DOUBLE_OBJ = "DOUBLE"
-=======
->>>>>>> 029ffe3... Add push statement evaluator
+	SHORT_OBJ   = "INT16"
+	FLOAT_OBJ   = "FLOAT32"
+	DOUBLE_OBJ  = "DOUBLE"
 )
 
 type Object interface {
@@ -44,7 +41,6 @@ func (s *Short) Type() ObjectType {
 	return SHORT_OBJ
 }
 
-
 type Byte struct {
 	Value int8
 }
@@ -62,17 +58,12 @@ type Float struct {
 }
 
 func (f *Float) Inspect() string {
-<<<<<<< HEAD
 	return fmt.Sprintf("%f", f.Value)
-=======
-	return fmt.Sprintf("%d", f.Value)
->>>>>>> 029ffe3... Add push statement evaluator
 }
 
 func (f *Float) Type() ObjectType {
 	return FLOAT_OBJ
 }
-<<<<<<< HEAD
 
 type Double struct {
 	Value float64
@@ -85,5 +76,3 @@ func (d *Double) Inspect() string {
 func (d *Double) Type() ObjectType {
 	return DOUBLE_OBJ
 }
-=======
->>>>>>> 029ffe3... Add push statement evaluator

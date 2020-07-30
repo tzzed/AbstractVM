@@ -35,8 +35,6 @@ const (
 	MUL    = "mul"
 	DIV    = "div"
 	MOD    = "mod"
-	LOAD   = "load"
-	STORE  = "store"
 	PRINT  = "print"
 	EXIT   = "exit"
 
@@ -48,14 +46,11 @@ const (
 	FLOAT32    = "float32"
 	FLOAT64    = "float64"
 	DOUBLE     = "double"
-	BIGDECIMAL = "bigdecimal"
 )
 
 var keywords = map[string]TokenType{
 	"assert": ASSERT,
 	"push":   PUSH,
-	"store":  STORE,
-	"load":   LOAD,
 	"pop":    POP,
 	"clear":  CLEAR,
 	"add":    ADD,

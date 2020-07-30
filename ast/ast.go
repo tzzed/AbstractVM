@@ -221,62 +221,8 @@ func (as *AssertStatement) String() string {
 	return out.String()
 }
 
-type LoadStatement struct {
-	Token token.Token // the token.LET token
-	Name  *Identifier
-	Value Expression
-}
-
-func (ls *LoadStatement) statementNode() {}
-
-func (ls *LoadStatement) TokenLiteral() string {
-	return ls.Token.Literal
-}
-
-func (ls *LoadStatement) String() string {
-	var out bytes.Buffer
-
-	out.WriteString(ls.TokenLiteral() + " ")
-	out.WriteString(ls.Name.String())
-	out.WriteString(token.LPAREN)
-
-	if ls.Value != nil {
-		out.WriteString(ls.Value.String())
-	}
-
-	out.WriteString(token.RPAREN)
-	return out.String()
-}
-
-type StoreStatement struct {
-	Token token.Token // the token.LET token
-	Name  *Identifier
-	Value Expression
-}
-
-func (ss *StoreStatement) statementNode() {}
-
-func (ss *StoreStatement) TokenLiteral() string {
-	return ss.Token.Literal
-}
-
-func (ss *StoreStatement) String() string {
-	var out bytes.Buffer
-
-	out.WriteString(ss.TokenLiteral() + " ")
-	out.WriteString(ss.Name.String())
-	out.WriteString(token.LPAREN)
-
-	if ss.Value != nil {
-		out.WriteString(ss.Value.String())
-	}
-
-	out.WriteString(token.RPAREN)
-	return out.String()
-}
-
 type AddStatement struct {
-	Token token.Token // the token.LET token
+	Token token.Token
 	Name  *Identifier
 }
 
@@ -290,6 +236,44 @@ func (as *AddStatement) String() string {
 	var out bytes.Buffer
 
 	out.WriteString(as.TokenLiteral())
+
+	return out.String()
+}
+
+type DivStatement struct {
+	Token token.Token // the token.LET token
+	Name  *Identifier
+}
+
+func (do *DivStatement) statementNode() {}
+
+func (do *DivStatement) TokenLiteral() string {
+	return do.Token.Literal
+}
+
+func (do *DivStatement) String() string {
+	var out bytes.Buffer
+
+	out.WriteString(do.TokenLiteral())
+
+	return out.String()
+}
+
+type MulStatement struct {
+	Token token.Token // the token.LET token
+	Name  *Identifier
+}
+
+func (mo *MulStatement) statementNode() {}
+
+func (mo *MulStatement) TokenLiteral() string {
+	return mo.Token.Literal
+}
+
+func (mo *MulStatement) String() string {
+	var out bytes.Buffer
+
+	out.WriteString(mo.TokenLiteral())
 
 	return out.String()
 }

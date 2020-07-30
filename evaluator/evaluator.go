@@ -17,7 +17,7 @@ type Stack struct {
 	size int
 }
 
-func New() *Stack {
+func NewStack() *Stack {
 	s := &Stack{nil, 0}
 	return s
 }
@@ -32,15 +32,116 @@ func (s *Stack) Push(v Value) {
 }
 
 func (s *Stack) Pop() (Value, error) {
-	if s.size == 0 {
-		return Value{}, errors.New("error stack is empty")
+	if s.IsEmpty() {
+		return Value{}, errors.New("error: pop on empty stack")
 	}
 
 	v := s.head.v
 	s.head = s.head.next
 	s.size--
 	return v, nil
+}
 
+func (s *Stack) Clear() {
+	if s.IsEmpty() {
+		return
+	}
+	temp := s.head
+	for temp != nil {
+		_, _ = s.Pop()
+		temp = temp.next
+	}
+}
+
+func (s *Stack) IsEmpty() bool {
+	return s.size == 0
+}
+
+func (s *Stack) Dup() {
+	if s.IsEmpty() {
+		return
+	}
+
+	dup := s.head.v
+	s.Push(dup)
+}
+func (s *Stack) Dump() {
+	tmp := s.head
+	for tmp != nil {
+		fmt.Println(tmp.v)
+		tmp = tmp.next
+	}
+	fmt.Println()
+}
+
+func (s *Stack) Swap() error {
+	if s.size < 2 {
+		return fmt.Errorf("error: Swap require stack size greater than 2: got %d", s.size)
+	}
+
+	a, _ := s.Pop()
+	b, _ := s.Pop()
+	s.Push(a)
+	s.Push(b)
+	return nil
+}
+
+func (s *Stack) InsertAt(p int, v Value) error {
+	if p < 0 || p > s.size {
+		return fmt.Errorf("index %d out of range", p)
+	}
+
+	st := NewStack()
+	temp := s.head
+	i := 0
+	for temp != nil {
+		if i == p {
+			s.Push(v)
+			break
+		}
+
+		va, err := s.Pop()
+		if err != nil {
+			return err
+		}
+
+		st.Push(va)
+		temp = temp.next
+		i++
+	}
+
+	temp = st.head
+	for temp != nil {
+		va, err := st.Pop()
+		if err != nil {
+			return err
+		}
+
+		s.Push(va)
+		temp = temp.next
+	}
+
+	return nil
+}
+
+func (s *Stack) Peek(index int) (Value, error) {
+	//stack size is between 0-15
+	if index < 0 || index > 15 {
+		return Value{}, fmt.Errorf("index %d out of range", index)
+	}
+
+	tmp := s.head
+	i := 0
+	for tmp != nil {
+		if i == index {
+			return tmp.v, nil
+		}
+
+		i++
+		tmp = tmp.next
+	}
+
+	return Value{}, fmt.Errorf("no value at index %d", index)
 }
 
 func (s *Stack) Eval(node ast.Node) (Value, error) {
@@ -56,20 +157,15 @@ func (s *Stack) Eval(node ast.Node) (Value, error) {
 		return Value{V: node.IntValue}, nil
 	case *ast.AssertStatement:
 		return s.evalAssert(node)
+	case *ast.MulStatement:
+		return s.evalMul()
 	default:
 		return Value{}, fmt.Errorf("unknown instruction %v", node)
 	}
 
 }
 
-func (s *Stack) evalStatements(stmts []ast.Statement) (Value, error) {
-
-	for _, statement := range stmts {
-		return s.Eval(statement)
-	}
-
-	return Value{}, errors.New("no statement")
-}
+func (s *Stack) evalStatements(stmts []ast.Statement) (Value, error) { return s.Eval(stmts[0]) }
 
 func convertAstToValue(n string, expr ast.Expression) (Value, error) {
 	switch {
@@ -109,26 +205,13 @@ func (s *Stack) evalPushStatement(stmt *ast.PushStatement) (Value, error) {
 	return v, nil
 }
 
-func (s *Stack) Print() {
-	tmp := s.head
-	for tmp != nil {
-		fmt.Println(tmp.v)
-		tmp = tmp.next
-	}
-	fmt.Println()
-}
-
 func (s *Stack) evalAdd() (Value, error) {
-	a, err := s.Pop()
-	if err != nil {
-		return Value{}, errors.New("empty stack")
+	if s.size < 2 {
+		return Value{}, fmt.Errorf("stack size must be greater than 2: got %d", s.size)
 	}
 
-	b, err := s.Pop()
-	if err != nil {
-		return Value{}, errors.New("not enough elem in stack")
-	}
-
+	a, _ := s.Pop()
+	b, _ := s.Pop()
 	switch GetBiggerType(a, b) {
 	case CharValue:
 		ca, err := a.ConvertToChar()
@@ -207,6 +290,10 @@ func (s *Stack) evalAdd() (Value, error) {
 }
 
 func (s *Stack) evalAssert(stmt *ast.AssertStatement) (Value, error) {
+	if s.IsEmpty() {
+		return Value{}, errors.New("cannot check value empty stack")
+	}
+
 	res := s.head
 	v, err := convertAstToValue(stmt.Name.String(), stmt.Value)
 	if err != nil {
@@ -217,5 +304,94 @@ func (s *Stack) evalAssert(stmt *ast.AssertStatement) (Value, error) {
 		return v, nil
 	}
 
-	return v, fmt.Errorf("expected %s(%v) stack contains  %s(%v)", v.Type, v.V, res.v.Type, res.v.V )
+	return v, fmt.Errorf("expected %s(%v) stack contains  %s(%v)", v.Type, v.V, res.v.Type, res.v.V)
+}
+
+func (s *Stack) evalMul() (Value, error) {
+
+	a, err := s.Pop()
+	if err != nil {
+		return Value{}, err
+	}
+
+	b, err := s.Pop()
+	if err != nil {
+		return Value{}, err
+	}
+
+	switch GetBiggerType(a, b) {
+	case CharValue:
+		ca, err := a.ConvertToChar()
+		if err != nil {
+			return a, err
+		}
+
+		cb, err := b.ConvertToChar()
+		if err != nil {
+			return b, err
+		}
+
+		v := NewInt8Value(ca * cb)
+		s.Push(v)
+		return v, nil
+	case ShortValue:
+		sa, err := a.ConvertToShort()
+		if err != nil {
+			return Value{}, err
+		}
+		sb, err := b.ConvertToShort()
+		if err != nil {
+			return Value{}, err
+		}
+
+		v := NewInt16Value(sa * sb)
+		s.Push(v)
+		return v, nil
+	case IntegerValue:
+		ia, err := a.ConvertToInteger()
+		if err != nil {
+			return a, err
+		}
+
+		ib, err := b.ConvertToInteger()
+		if err != nil {
+			return b, err
+		}
+
+		v := NewInt32Value(ia * ib)
+		s.Push(v)
+		return v, nil
+	case FloatValue:
+		fa, err := a.ConvertToFloat()
+		if err != nil {
+			fmt.Println(fa)
+			return a, err
+		}
+
+		fb, err := b.ConvertToFloat()
+		if err != nil {
+			fmt.Println(fb)
+			return b, err
+		}
+
+		v := NewFloatValue(fa + fb)
+		s.Push(v)
+		return v, nil
+	case DoubleValue:
+		da, err := a.ConvertToDouble()
+		if err != nil {
+			return a, err
+		}
+
+		db, err := b.ConvertToDouble()
+		if err != nil {
+			return b, err
+		}
+
+		v := NewDoubleValue(da * db)
+		s.Push(v)
+		return v, nil
+	}
+
+	return Value{}, nil
 }

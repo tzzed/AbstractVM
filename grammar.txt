@@ -12,8 +12,6 @@ INSTR :=  push VALUE
 	| mul
 	| div
 	| mod
-	| load VALUE
-	| store VALUE
 	| print
 	| exit
 

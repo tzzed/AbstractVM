@@ -5,6 +5,7 @@ import (
 	"avm/lexer"
 	"avm/token"
 	"fmt"
+	"os"
 	"strconv"
 )
 
@@ -64,6 +65,10 @@ func New(l *lexer.Lexer) *Parser {
 	return p
 }
 
+func (p *Parser) parseExit() {
+	os.Exit(0)
+}
+
 func (p *Parser) registerPrefix(tokenType token.TokenType, fn prefixParseFn) {
 	p.prefixParseFns[tokenType] = fn
 }
@@ -78,6 +83,9 @@ func (p *Parser) ParseProgram() *ast.Program {
 
 	pg.Statements = []ast.Statement{}
 	for p.curTok.Type != token.EOF && p.curTok.Type != token.EOI {
+		if p.curTok.Type == token.EXIT {
+			p.parseExit()
+		}
 		stmt := p.parseStatement()
 		pg.Statements = append(pg.Statements, stmt)
 		p.nextToken()
@@ -92,12 +100,12 @@ func (p *Parser) parseStatement() ast.Statement {
 		return p.parsePushStatement()
 	case token.ASSERT:
 		return p.parseAssertStatement()
-	case token.LOAD:
-		return p.parseLoadStatement()
-	case token.STORE:
-		return p.parseStoreStatement()
 	case token.ADD:
 		return p.parseAddStatement()
+	case token.MUL:
+		return p.parseMulOperand()
+	case token.DIV:
+		return p.parseDivOperand()
 	default:
 		if token.IsIdent(p.curTok.Literal) {
 			return p.parseInstructionStatement()
@@ -145,6 +153,7 @@ func (p *Parser) noPrefixParseFnError(t token.TokenType) {
 	p.errors = append(p.errors, msg)
 }
 
+// parseInstructionStatement
 func (p *Parser) parseInstructionStatement() *ast.InstructionStatement {
 	stmt := &ast.InstructionStatement{Token: p.curTok}
 
@@ -288,40 +297,6 @@ func (p *Parser) parseAssertStatement() *ast.AssertStatement {
 	return stmt
 }
 
-func (p *Parser) parseLoadStatement() *ast.LoadStatement {
-	stmt := &ast.LoadStatement{Token: p.curTok}
-
-	p.nextToken()
-	operand := LookupOperand(p.curTok.Literal)
-	stmt.Name = &ast.Identifier{Token: p.curTok, Value: p.curTok.Literal}
-	if !p.expectPeek(token.LPAREN) {
-		return nil
-	}
-
-	p.nextToken()
-	p.curTok.Type = operand
-	stmt.Value = p.parseExpression()
-
-	return stmt
-}
-
-func (p *Parser) parseStoreStatement() *ast.StoreStatement {
-	stmt := &ast.StoreStatement{Token: p.curTok}
-
-	p.nextToken()
-	operand := LookupOperand(p.curTok.Literal)
-	stmt.Name = &ast.Identifier{Token: p.curTok, Value: p.curTok.Literal}
-	if !p.expectPeek(token.LPAREN) {
-		return nil
-	}
-
-	p.nextToken()
-	p.curTok.Type = operand
-	stmt.Value = p.parseExpression()
-
-	return stmt
-}
-
 func (p *Parser) parseAddStatement() *ast.AddStatement {
 	stmt := &ast.AddStatement{Token: p.curTok}
 
@@ -334,6 +309,35 @@ func (p *Parser) parseAddStatement() *ast.AddStatement {
 
 	p.nextToken()
 	p.curTok.Type = operand
-	fmt.Println("stmt == ", stmt)
+	return stmt
+}
+
+func (p *Parser) parseDivOperand() *ast.DivStatement {
+	stmt := &ast.DivStatement{Token: p.curTok}
+
+	p.nextToken()
+	operand := LookupOperand(p.curTok.Literal)
+	stmt.Name = &ast.Identifier{Token: p.curTok, Value: p.curTok.Literal}
+	if !p.expectPeek(token.LPAREN) {
+		return nil
+	}
+
+	p.nextToken()
+	p.curTok.Type = operand
+	return stmt
+}
+
+func (p *Parser) parseMulOperand() *ast.MulStatement {
+	stmt := &ast.MulStatement{Token: p.curTok}
+
+	p.nextToken()
+	operand := LookupOperand(p.curTok.Literal)
+	stmt.Name = &ast.Identifier{Token: p.curTok, Value: p.curTok.Literal}
+	if !p.expectPeek(token.LPAREN) {
+		return nil
+	}
+
+	p.nextToken()
+	p.curTok.Type = operand
 	return stmt
 }
