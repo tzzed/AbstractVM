@@ -1,4 +1,4 @@
-package repl
+package shell
 
 import (
 	"avm/evaluator"
@@ -11,12 +11,6 @@ import (
 
 const PROMPT = "avm>"
 
-func printParserErrors(out io.Writer, errors []string) {
-	for _, err := range errors {
-		_, _ = io.WriteString(out, err)
-	}
-}
-
 func Start(in io.Reader, out io.Writer) {
 	scanner := bufio.NewScanner(in)
 	st := evaluator.NewStack()
@@ -26,20 +20,23 @@ func Start(in io.Reader, out io.Writer) {
 		if !scanned {
 			return
 		}
-
 		line := scanner.Text()
 		l := lexer.New(line)
 		p := parser.New(l)
-		pg := p.ParseProgram()
-
-		if len(p.Errors()) != 0 {
-			printParserErrors(out, p.Errors())
+		pg, err := p.ParseProgram()
+		if err != nil {
+			fmt.Println(err.Error())
+			continue
 		}
 
-		_, err := st.Eval(pg)
+		if pg == nil {
+			continue
+		}
+
+		_, err = st.Eval(pg)
 		if err != nil {
-			fmt.Println(err)
-			return
+			fmt.Println(err.Error() + line)
+
 		} else {
 			st.Dump()
 		}

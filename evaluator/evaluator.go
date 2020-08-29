@@ -5,6 +5,7 @@ import (
 	"avm/token"
 	"errors"
 	"fmt"
+	"math"
 )
 
 type Node struct {
@@ -146,21 +147,26 @@ func (s *Stack) Peek(index int) (Value, error) {
 
 func (s *Stack) Eval(node ast.Node) (Value, error) {
 
-	switch node := node.(type) {
+	switch n := node.(type) {
 	case *ast.Program:
-		return s.evalStatements(node.Statements)
+		return s.evalStatements(n.Statements)
 	case *ast.PushStatement:
-		return s.evalPushStatement(node)
+		return s.evalPushStatement(n)
 	case *ast.AddStatement:
 		return s.evalAdd()
 	case *ast.IntegerLiteral:
-		return Value{V: node.IntValue}, nil
+		return Value{V: n.IntValue}, nil
 	case *ast.AssertStatement:
-		return s.evalAssert(node)
+		return s.evalAssert(n)
 	case *ast.MulStatement:
 		return s.evalMul()
+	case *ast.DivStatement:
+		return s.evalDiv()
+	case *ast.ModStatement:
+		return s.evalMod()
+
 	default:
-		return Value{}, fmt.Errorf("unknown instruction %v", node)
+		return Value{}, fmt.Errorf("unknown instruction ")
 	}
 
 }
@@ -305,6 +311,223 @@ func (s *Stack) evalAssert(stmt *ast.AssertStatement) (Value, error) {
 	}
 
 	return v, fmt.Errorf("expected %s(%v) stack contains  %s(%v)", v.Type, v.V, res.v.Type, res.v.V)
+}
+
+func (s *Stack) evalMod() (Value, error) {
+	a, err := s.Pop()
+	if err != nil {
+		return Value{}, err
+	}
+
+	b, err := s.Pop()
+	if err != nil {
+		return Value{}, err
+	}
+
+	switch GetBiggerType(a, b) {
+	case CharValue:
+		ca, err := a.ConvertToChar()
+		if err != nil {
+			return a, err
+		}
+
+		cb, err := b.ConvertToChar()
+		if err != nil {
+			return b, err
+		}
+
+		// if the divisor by 0 returns error
+		if cb == 0 {
+			return Value{}, errors.New("error: integer divide by zero")
+		}
+
+		v := NewInt8Value(ca % cb)
+		s.Push(v)
+		return v, nil
+	case ShortValue:
+		sa, err := a.ConvertToShort()
+		if err != nil {
+			return Value{}, err
+		}
+		sb, err := b.ConvertToShort()
+		if err != nil {
+			return Value{}, err
+		}
+
+		if sb == 0 {
+			return Value{}, errors.New("error: integer divide by zero")
+		}
+		v := NewInt16Value(int16(sa % sb))
+		s.Push(v)
+		return v, nil
+	case IntegerValue:
+		ia, err := a.ConvertToInteger()
+		if err != nil {
+			return a, err
+		}
+
+		ib, err := b.ConvertToInteger()
+		if err != nil {
+			return b, err
+		}
+
+		if b.V.(int32) == 0 {
+			return Value{}, errors.New("error: integer divide by zero")
+		}
+
+		v := NewInt32Value(ia % ib)
+		s.Push(v)
+		return v, nil
+	case FloatValue:
+		fa, err := a.ConvertToFloat()
+		if err != nil {
+			fmt.Println(fa)
+			return a, err
+		}
+
+		fb, err := b.ConvertToFloat()
+		if err != nil {
+			fmt.Println(fb)
+			return b, err
+		}
+
+		if b.V.(float32) == 0 {
+			return Value{}, errors.New("error: integer divide by zero")
+		}
+
+		f := math.Mod(float64(fa), float64(fb))
+		v := NewFloatValue(float32(f))
+		s.Push(v)
+		return v, nil
+	case DoubleValue:
+		da, err := a.ConvertToDouble()
+		if err != nil {
+			return a, err
+		}
+
+		db, err := b.ConvertToDouble()
+		if err != nil {
+			return b, err
+		}
+
+		if b.V.(float64) == 0 || a.V.(float64) == 0 {
+			return Value{}, errors.New("error: integer divide by zero")
+		}
+		f := math.Mod(da, db)
+		v := NewDoubleValue(f)
+		s.Push(v)
+		return v, nil
+	}
+
+	return Value{}, nil
+}
+
+func (s *Stack) evalDiv() (Value, error) {
+	a, err := s.Pop()
+	if err != nil {
+		return Value{}, err
+	}
+
+	b, err := s.Pop()
+	if err != nil {
+		return Value{}, err
+	}
+
+	switch GetBiggerType(a, b) {
+	case CharValue:
+		ca, err := a.ConvertToChar()
+		if err != nil {
+			return a, err
+		}
+
+		cb, err := b.ConvertToChar()
+		if err != nil {
+			return b, err
+		}
+
+		// if the divisor by 0 returns error
+		if cb == 0 {
+			return Value{}, errors.New("error: integer divide by zero")
+		}
+
+		v := NewInt8Value(ca / cb)
+		s.Push(v)
+		return v, nil
+	case ShortValue:
+		sa, err := a.ConvertToShort()
+		if err != nil {
+			return Value{}, err
+		}
+		sb, err := b.ConvertToShort()
+		if err != nil {
+			return Value{}, err
+		}
+
+		if sb == 0 {
+			return Value{}, errors.New("error: integer divide by zero")
+		}
+		v := NewInt16Value(int16(sa / sb))
+		s.Push(v)
+		return v, nil
+	case IntegerValue:
+		ia, err := a.ConvertToInteger()
+		if err != nil {
+			return a, err
+		}
+
+		ib, err := b.ConvertToInteger()
+		if err != nil {
+			return b, err
+		}
+
+		if b.V.(int32) == 0 {
+			return Value{}, errors.New("error: integer divide by zero")
+		}
+
+		v := NewInt32Value(ia / ib)
+		s.Push(v)
+		return v, nil
+	case FloatValue:
+		fa, err := a.ConvertToFloat()
+		if err != nil {
+			fmt.Println(fa)
+			return a, err
+		}
+
+		fb, err := b.ConvertToFloat()
+		if err != nil {
+			fmt.Println(fb)
+			return b, err
+		}
+
+		if b.V.(float32) == 0 {
+			return Value{}, errors.New("error: integer divide by zero")
+		}
+
+		v := NewFloatValue(fa / fb)
+		fmt.Printf("float: %v / %v = %v\n", fa, fb, v)
+		s.Push(v)
+		return v, nil
+	case DoubleValue:
+		da, err := a.ConvertToDouble()
+		if err != nil {
+			return a, err
+		}
+
+		db, err := b.ConvertToDouble()
+		if err != nil {
+			return b, err
+		}
+
+		if b.V.(float64) == 0 || a.V.(float64) == 0 {
+			return Value{}, errors.New("error: integer divide by zero")
+		}
+		v := NewDoubleValue(da / db)
+		s.Push(v)
+		return v, nil
+	}
+
+	return Value{}, nil
 }
 
 func (s *Stack) evalMul() (Value, error) {
