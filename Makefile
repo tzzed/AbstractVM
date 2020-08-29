@@ -1,5 +1,6 @@
 NAME := avm
 
+
 .PHONY: all $(NAME) test testrace build gen
 
 all: $(NAME)
@@ -21,3 +22,8 @@ testtinygo:
 bench:
 	go test -v -run=^\$$ -benchmem -bench=. ./...
 	cd cmd/genji && go test -v -run=^\$$ -benchmem -bench=. ./...
+
+
+
+run: build
+	. $(RUN_ARGS)

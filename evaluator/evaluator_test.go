@@ -4,10 +4,75 @@ import (
 	"avm/lexer"
 	"avm/parser"
 	"fmt"
+	"math"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 )
+
+func TestModOperand(t *testing.T) {
+	tests := []struct {
+		input string
+		a     Value
+		b     Value
+		want  Value
+		fails bool
+	}{
+		{"mod", NewInt32Value(0), NewInt8Value(5), NewInt32Value(0), true},
+		{"mod", NewInt16Value(5), NewInt8Value(2), NewInt16Value(2 % 5), false},
+		{"mod", NewInt16Value(8), NewInt8Value(32), NewInt16Value(32 % 8), false},
+		{"mod", NewInt16Value(8), NewInt8Value(0), NewInt16Value(0), true},
+		{"mod", NewFloatValue(3), NewFloatValue(32.33), NewFloatValue(float32(math.Mod(32.33, 3))), false},
+	}
+
+	for _, tt := range tests {
+		t.Run("mod evaluator", func(t *testing.T) {
+			st := NewStack()
+			st.Push(tt.a)
+			st.Push(tt.b)
+			ev, err := testEval(t, tt.input, st)
+			if tt.fails {
+				require.Error(t, err)
+				return
+			} else {
+				require.Equal(t, tt.want.V, ev.V)
+			}
+		})
+
+	}
+}
+
+func TestDivOperand(t *testing.T) {
+	tests := []struct {
+		input string
+		a     Value
+		b     Value
+		want  Value
+		fails bool
+	}{
+		{"div", NewInt32Value(0), NewInt8Value(5), NewInt32Value(0), true},
+		{"div", NewInt16Value(5), NewInt8Value(2), NewInt16Value(0), false},
+		{"div", NewInt16Value(8), NewInt8Value(32), NewInt16Value(4), false},
+		{"div", NewInt16Value(8), NewInt8Value(0), NewInt16Value(0), false},
+		{"div", NewFloatValue(3), NewFloatValue(32.33), NewFloatValue(32.33 / 3), false},
+	}
+
+	for _, tt := range tests {
+		t.Run("div evaluator", func(t *testing.T) {
+			st := NewStack()
+			st.Push(tt.a)
+			st.Push(tt.b)
+			ev, err := testEval(t, tt.input, st)
+			if tt.fails {
+				require.Error(t, err)
+				return
+			} else {
+				require.Equal(t, tt.want.V, ev.V)
+			}
+		})
+
+	}
+}
 
 func TestMulOperand(t *testing.T) {
 	tests := []struct {
@@ -26,7 +91,7 @@ func TestMulOperand(t *testing.T) {
 	for _, tt := range tests {
 		st.Push(tt.a)
 		st.Push(tt.b)
-		ev, err := testEval(tt.input, st)
+		ev, err := testEval(t, tt.input, st)
 		if tt.errored {
 			require.Error(t, err)
 			continue
@@ -85,7 +150,7 @@ func TestConvertAstToValue(t *testing.T) {
 	st := NewStack()
 	for _, tt := range tests {
 		st.Push(tt.a)
-		v, err := testEval(tt.input, st)
+		v, err := testEval(t, tt.input, st)
 		if tt.errored {
 			require.Error(t, err)
 			return
@@ -116,7 +181,7 @@ func TestEvalAddInstruction(t *testing.T) {
 	for _, tt := range tests {
 		st.Push(tt.a)
 		st.Push(tt.b)
-		v, err := testEval(tt.input, st)
+		v, err := testEval(t, tt.input, st)
 		require.NoError(t, err)
 		require.Equal(t, fmt.Sprintf("%.2f", tt.want.V), fmt.Sprintf("%.2f", v.V))
 	}
@@ -145,7 +210,7 @@ func TestEvalPushInstruction(t *testing.T) {
 
 	st := NewStack()
 	for _, tt := range tests {
-		v, err := testEval(tt.input, st)
+		v, err := testEval(t, tt.input, st)
 		require.NoError(t, err)
 		require.Equal(t, tt.want.V, v.V)
 	}
@@ -153,9 +218,10 @@ func TestEvalPushInstruction(t *testing.T) {
 	require.Equal(t, len(tests), st.size)
 }
 
-func testEval(input string, st *Stack) (Value, error) {
+func testEval(t *testing.T, input string, st *Stack) (Value, error) {
 	l := lexer.New(input)
 	p := parser.New(l)
-	pg := p.ParseProgram()
+	pg, err := p.ParseProgram()
+	require.NoError(t, err)
 	return st.Eval(pg)
 }

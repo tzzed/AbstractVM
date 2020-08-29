@@ -7,7 +7,7 @@ import (
 
 type Lexer struct {
 	in      string
-	pos     int // current position (points to current char)
+	Pos     int // current position (points to current char)
 	readPos int // current reading position in input. Always point to the next char int the input
 	ch      byte
 }
@@ -26,7 +26,7 @@ func (l *Lexer) scan() {
 		l.ch = l.in[l.readPos]
 	}
 
-	l.pos = l.readPos
+	l.Pos = l.readPos
 	l.readPos++
 }
 
@@ -77,12 +77,12 @@ func (l *Lexer) NextToken() token.Token {
 }
 
 func (l *Lexer) scanNumber() string {
-	pos := l.pos
+	pos := l.Pos
 	for isDigit(l.ch) {
 		l.scan()
 	}
 
-	return l.in[pos:l.pos]
+	return l.in[pos:l.Pos]
 }
 
 func (l *Lexer) peekChar() byte {
@@ -95,7 +95,7 @@ func (l *Lexer) peekChar() byte {
 
 // ScanIdent read until it encounters non-letter character
 func (l *Lexer) ScanIdent() string {
-	pos := l.pos
+	pos := l.Pos
 	for isLetter(l.ch) {
 		l.scan()
 	}
@@ -104,7 +104,7 @@ func (l *Lexer) ScanIdent() string {
 		l.scan()
 	}
 
-	return l.in[pos:l.pos]
+	return l.in[pos:l.Pos]
 }
 
 // isLetter check if the given parameter is a letter.

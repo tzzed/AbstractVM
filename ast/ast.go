@@ -37,7 +37,7 @@ type Expression interface {
 }
 
 type Identifier struct {
-	Token token.Token // the token.IDENT token
+	Token token.Token
 	Value string
 }
 
@@ -58,6 +58,7 @@ type IntegerLiteral struct {
 
 func (il *IntegerLiteral) expressionNode() {}
 
+// TokenLiteral returns string token literal
 func (il *IntegerLiteral) TokenLiteral() string {
 	return il.Token.Literal
 }
@@ -73,6 +74,7 @@ type ShortLiteral struct {
 
 func (sl *ShortLiteral) expressionNode() {}
 
+// TokenLiteral returns string token literal
 func (sl *ShortLiteral) TokenLiteral() string {
 	return sl.Token.Literal
 }
@@ -88,6 +90,7 @@ type ByteLiteral struct {
 
 func (bl *ByteLiteral) expressionNode() {}
 
+// TokenLiteral returns string token literal
 func (bl *ByteLiteral) TokenLiteral() string {
 	return bl.Token.Literal
 }
@@ -103,6 +106,7 @@ type FloatLiteral struct {
 
 func (fl *FloatLiteral) expressionNode() {}
 
+// TokenLiteral returns string token literal
 func (fl *FloatLiteral) TokenLiteral() string {
 	return fl.Token.Literal
 }
@@ -118,6 +122,7 @@ type DoubleLiteral struct {
 
 func (dl *DoubleLiteral) expressionNode() {}
 
+// TokenLiteral returns string token literal
 func (dl *DoubleLiteral) TokenLiteral() string {
 	return dl.Token.Literal
 }
@@ -133,6 +138,7 @@ type InstructionStatement struct {
 
 func (is *InstructionStatement) statementNode() {}
 
+// TokenLiteral returns string token literal
 func (is *InstructionStatement) TokenLiteral() string {
 	return is.Token.Literal
 }
@@ -146,13 +152,14 @@ func (is *InstructionStatement) String() string {
 }
 
 type PushStatement struct {
-	Token token.Token // the token.LET token
+	Token token.Token
 	Name  *Identifier
 	Value Expression
 }
 
 func (ls *PushStatement) statementNode() {}
 
+// TokenLiteral returns string token literal
 func (ls *PushStatement) TokenLiteral() string {
 	return ls.Token.Literal
 }
@@ -180,6 +187,7 @@ type ValueLiteral struct {
 
 func (ps *ValueLiteral) expressionNode() {}
 
+// TokenLiteral returns string token literal.
 func (ps *ValueLiteral) TokenLiteral() string {
 	return ps.Token.Literal
 }
@@ -195,7 +203,7 @@ func (ps *ValueLiteral) String() string {
 }
 
 type AssertStatement struct {
-	Token token.Token // the token.LET token
+	Token token.Token
 	Name  *Identifier
 	Value Expression
 }
@@ -228,6 +236,7 @@ type AddStatement struct {
 
 func (as *AddStatement) statementNode() {}
 
+// TokenLiteral returns string token literal
 func (as *AddStatement) TokenLiteral() string {
 	return as.Token.Literal
 }
@@ -240,8 +249,28 @@ func (as *AddStatement) String() string {
 	return out.String()
 }
 
+type PopStatement struct {
+	Token token.Token
+	Name  *Identifier
+}
+
+func (ps *PopStatement) statementNode() {}
+
+// TokenLiteral returns string token literal.
+func (ps *PopStatement) TokenLiteral() string {
+	return ps.Token.Literal
+}
+
+func (ps *PopStatement) String() string {
+	var out bytes.Buffer
+
+	out.WriteString(ps.TokenLiteral())
+
+	return out.String()
+}
+
 type DivStatement struct {
-	Token token.Token // the token.LET token
+	Token token.Token
 	Name  *Identifier
 }
 
@@ -260,12 +289,13 @@ func (do *DivStatement) String() string {
 }
 
 type MulStatement struct {
-	Token token.Token // the token.LET token
+	Token token.Token
 	Name  *Identifier
 }
 
 func (mo *MulStatement) statementNode() {}
 
+// TokenLiteral returns string token literal
 func (mo *MulStatement) TokenLiteral() string {
 	return mo.Token.Literal
 }
@@ -274,6 +304,26 @@ func (mo *MulStatement) String() string {
 	var out bytes.Buffer
 
 	out.WriteString(mo.TokenLiteral())
+
+	return out.String()
+}
+
+type ModStatement struct {
+	Token token.Token
+	Name  *Identifier
+}
+
+func (mods *ModStatement) statementNode() {}
+
+// TokenLiteral returns string token literal
+func (mods *ModStatement) TokenLiteral() string {
+	return mods.Token.Literal
+}
+
+func (mods *ModStatement) String() string {
+	var out bytes.Buffer
+
+	out.WriteString(mods.TokenLiteral())
 
 	return out.String()
 }

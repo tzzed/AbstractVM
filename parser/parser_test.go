@@ -9,6 +9,120 @@ import (
 	"testing"
 )
 
+func TestModStatement(t *testing.T) {
+	tests := []struct {
+		input              string
+		expectedIdentifier string
+		fails              bool
+	}{
+		{"mod", "mod", false},
+		{"mod pop", "", true},
+	}
+
+	for _, tt := range tests {
+		t.Run("mod statement", func(t *testing.T) {
+			l := lexer.New(tt.input)
+			p := New(l)
+			program, err := p.ParseProgram()
+			if tt.fails {
+				require.Error(t, err)
+				return
+			}
+
+			require.NoError(t, err)
+			stmt := program.Statements[0]
+			testModStatement(t, stmt, tt.expectedIdentifier)
+
+		})
+	}
+}
+
+func TestDivStatement(t *testing.T) {
+	tests := []struct {
+		input              string
+		expectedIdentifier string
+		fails              bool
+	}{
+		{"div", "div", false},
+		{"div pop", "", true},
+	}
+
+	for _, tt := range tests {
+		t.Run("div` statement", func(t *testing.T) {
+			l := lexer.New(tt.input)
+			p := New(l)
+			program, err := p.ParseProgram()
+			if tt.fails {
+				require.Error(t, err)
+				return
+			}
+
+			require.NoError(t, err)
+			stmt := program.Statements[0]
+			testDivStatement(t, stmt, tt.expectedIdentifier)
+
+		})
+	}
+}
+
+func TestMulStatement(t *testing.T) {
+	tests := []struct {
+		input              string
+		expectedIdentifier string
+		fails              bool
+	}{
+		{"mul", "mul", false},
+		{"mul pop", "", true},
+	}
+
+	for _, tt := range tests {
+		t.Run("mul statement", func(t *testing.T) {
+			l := lexer.New(tt.input)
+			p := New(l)
+			program, err := p.ParseProgram()
+			if tt.fails {
+				require.Error(t, err)
+				return
+			}
+
+			require.NoError(t, err)
+			stmt := program.Statements[0]
+			testMulStatement(t, stmt, tt.expectedIdentifier)
+
+		})
+	}
+
+}
+
+func TestPopStatement(t *testing.T) {
+	tests := []struct {
+		input              string
+		expectedIdentifier string
+		fails              bool
+	}{
+		{"pop", "pop", false},
+		{"pop pop", "", true},
+	}
+
+	for _, tt := range tests {
+		t.Run("pop statement", func(t *testing.T) {
+			l := lexer.New(tt.input)
+			p := New(l)
+			program, err := p.ParseProgram()
+			if tt.fails {
+				require.Error(t, err)
+				return
+			}
+
+			require.NoError(t, err)
+			stmt := program.Statements[0]
+			testPopStatement(t, stmt, tt.expectedIdentifier)
+
+		})
+	}
+
+}
+
 func TestAssertStatement(t *testing.T) {
 	tests := []struct {
 		input              string
@@ -25,7 +139,7 @@ func TestAssertStatement(t *testing.T) {
 	for _, tt := range tests {
 		l := lexer.New(tt.input)
 		p := New(l)
-		program := p.ParseProgram()
+		program, _ := p.ParseProgram()
 
 		stmt := program.Statements[0]
 		testAssertStatement(t, stmt, tt.expectedIdentifier)
@@ -92,7 +206,7 @@ func TestInstructionsStatement(t *testing.T) {
 	for _, tt := range tests {
 		l := lexer.New(tt.input)
 		p := New(l)
-		stmt := p.parseInstructionStatement()
+		stmt, _ := p.parseInstructionStatement()
 		require.Equal(t, tt.want, stmt.TokenLiteral())
 	}
 }
@@ -102,28 +216,37 @@ func TestPushStatements(t *testing.T) {
 		input              string
 		expectedIdentifier string
 		expectedValue      interface{}
+		fail               bool
 	}{
-		{"push int8(42)", "int8", int8(42)},
-		{"push int16(42)", "int16", int16(42)},
-		{"push int32(42)", "int32", int32(42)},
-		{"push float(42.42)", "float", float32(42.42)},
-		{"push double(42.42)", "double", 42.42},
+		{"push int8(42)", "int8", int8(42), false},
+		{"push int16(42)", "int16", int16(42), false},
+		{"push int32(42)", "int32", int32(42), false},
+		{"push float(42.42)", "float", float32(42.42), false},
+		{"push double(42.42)", "double", 42.42, false},
+		{"push ", "double", 42.42, true},
 	}
 
 	for _, tt := range tests {
-		l := lexer.New(tt.input)
-		p := New(l)
-		program := p.ParseProgram()
+		t.Run("push statement", func(t *testing.T) {
+			l := lexer.New(tt.input)
+			p := New(l)
+			program, err := p.ParseProgram()
+			if tt.fail {
+				require.Error(t, err)
+				return
+			}
 
-		stmt := program.Statements[0]
-		if !testPushStatement(t, stmt, tt.expectedIdentifier) {
-			return
-		}
+			stmt := program.Statements[0]
+			if !testPushStatement(t, stmt, tt.expectedIdentifier) {
+				return
+			}
 
-		val := stmt.(*ast.PushStatement).Value
-		if !testLiteralExpression(t, val, tt.expectedValue) {
-			return
-		}
+			val := stmt.(*ast.PushStatement).Value
+			if !testLiteralExpression(t, val, tt.expectedValue) {
+				return
+			}
+		})
+
 	}
 
 }
@@ -143,6 +266,34 @@ func testAssertStatement(t *testing.T, s ast.Statement, name string) {
 	require.True(t, ok)
 	require.Equal(t, name, asStmt.Name.Value)
 	require.Equal(t, name, asStmt.Name.TokenLiteral())
+}
+
+func testPopStatement(t *testing.T, s ast.Statement, name string) {
+	require.Equal(t, "pop", s.TokenLiteral())
+	popStmt, ok := s.(*ast.PopStatement)
+	require.True(t, ok)
+	require.Equal(t, name, popStmt.Name.TokenLiteral())
+}
+
+func testMulStatement(t *testing.T, s ast.Statement, name string) {
+	require.Equal(t, "mul", s.TokenLiteral())
+	mulStmt, ok := s.(*ast.MulStatement)
+	require.True(t, ok)
+	require.Equal(t, name, mulStmt.Name.TokenLiteral())
+}
+
+func testDivStatement(t *testing.T, s ast.Statement, name string) {
+	require.Equal(t, "div", s.TokenLiteral())
+	mulStmt, ok := s.(*ast.DivStatement)
+	require.True(t, ok)
+	require.Equal(t, name, mulStmt.Name.TokenLiteral())
+}
+
+func testModStatement(t *testing.T, s ast.Statement, name string) {
+	require.Equal(t, "mod", s.TokenLiteral())
+	mulStmt, ok := s.(*ast.ModStatement)
+	require.True(t, ok)
+	require.Equal(t, name, mulStmt.Name.TokenLiteral())
 }
 
 func testLiteralExpression(

@@ -1,7 +1,8 @@
 ;−−−−−−−−−−−−−−−
 ;−example.avm−
 ;−−−−−−−−−−−−−−−
-								push					     int32(33)					   ; des grosses barres
+push int32(33)
+; des grosses barres
 push int32(43)
 add
 push int32(5)

@@ -1,5 +1,5 @@
 ;−−−−−−−−−−−−−−−
-; example.avm 
+; AVM File
 ;−−−−−−−−−−−−−−−
 push int32(33)
 push int32(42)
