@@ -6,14 +6,14 @@ import (
 )
 
 func TestReadFile(t *testing.T) {
-	tests := []struct{
-		name string
-		file string
+	tests := []struct {
+		name  string
+		file  string
 		fails bool
 	}{
 		{"Good file format", "../f.avm", false},
 		{"bad file format", "f.test", true},
-		{"file not exist", "test.avm", true},
+		{"file not found", "test.avm", true},
 	}
 
 	for _, tt := range tests {

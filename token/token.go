@@ -82,31 +82,3 @@ func IsIdent(ident string) bool {
 	_, ok := keywords[ident]
 	return ok
 }
-
-func GetAllInstructions() []string {
-
-	return []string{
-		"assert",
-		"push",
-		"pop",
-		"clear",
-		"add",
-		"sub",
-		"dump",
-		"mul",
-		"swap",
-		"dup",
-		"div",
-		"exit",
-		"mod",
-		"print",
-	}
-}
-
-func GetAllOperands() []string {
-	return []string{"int8",
-		"int16",
-		"int32",
-		"float",
-		"double"}
-}

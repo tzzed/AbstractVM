@@ -327,3 +327,23 @@ func (mods *ModStatement) String() string {
 
 	return out.String()
 }
+
+type DumpStatement struct {
+	Token token.Token
+	Name  *Identifier
+}
+
+func (d *DumpStatement) statementNode() {}
+
+// TokenLiteral returns string token literal
+func (d *DumpStatement) TokenLiteral() string {
+	return d.Token.Literal
+}
+
+func (d *DumpStatement) String() string {
+	var out bytes.Buffer
+
+	out.WriteString(d.TokenLiteral())
+
+	return out.String()
+}

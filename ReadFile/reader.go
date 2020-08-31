@@ -2,7 +2,6 @@ package ReadFile
 
 import (
 	"avm/evaluator"
-	"avm/lexer"
 	"avm/parser"
 	"bufio"
 	"fmt"
@@ -18,15 +17,13 @@ func ReadFile(filename string) error {
 
 	defer f.Close()
 
-	fmt.Printf("File %s is opened...\n", filename)
 	scanner := bufio.NewScanner(f)
 	st := evaluator.NewStack()
 	for scanner.Scan() {
 		line := scanner.Text()
 		line = strings.TrimSpace(line)
-		l := lexer.New(line)
-		p := parser.New(l)
-		pg, pErr := p.ParseProgram()
+		p := parser.NewParser(line)
+		pg, pErr := p.ParseInstruction()
 		if pErr != nil {
 			fmt.Println(pErr.Error())
 			continue
@@ -40,14 +37,14 @@ func ReadFile(filename string) error {
 		if err != nil {
 			fmt.Println(err.Error() + line)
 			return err
-		} else {
-			st.Dump()
 		}
 	}
 
 	if err = scanner.Err(); err != nil {
 		return err
 	}
+
+	_, _ = st.Dump()
 
 	return nil
 }

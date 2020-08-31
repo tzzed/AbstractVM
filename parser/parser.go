@@ -73,7 +73,9 @@ type Parser struct {
 	prefixParseFns map[token.TokenType]prefixParseFn
 }
 
-func New(l *lexer.Lexer) *Parser {
+// NewParser returns a new instance of Parser.
+func NewParser(in string) *Parser {
+	l := lexer.New(in)
 	p := &Parser{l: l}
 	p.nextToken()
 	p.nextToken()
@@ -101,14 +103,17 @@ func (p *Parser) nextToken() {
 	p.peekTok = p.l.NextToken()
 }
 
-func (p *Parser) ParseProgram() (*ast.Program, error) {
+// ParseInstruction returns an instance of ast.Program
+func (p *Parser) ParseInstruction() (*ast.Program, error) {
 	var pg ast.Program
 
 	pg.Statements = []ast.Statement{}
-	for p.curTok.Type != token.EOF && p.curTok.Type != token.EOI {
-		if p.curTok.Type == token.EXIT {
+	for p.curTok.Type != token.EOF {
+
+		if p.curTok.Type == token.EXIT || p.curTok.Type == token.EOI {
 			p.parseExit()
 		}
+
 		if p.curTok.Type == token.SEMICOLON {
 			_, _ = p.parseCommentStatement()
 			return nil, nil
@@ -144,12 +149,12 @@ func (p *Parser) parseStatement() (ast.Statement, error) {
 		return p.parsePopStatement()
 	case token.MOD:
 		return p.parseModStatement()
-
+	case token.DUMP:
+		return p.parseDumpStatement()
 	default:
 		if token.IsIdent(p.curTok.Literal) {
 			return p.parseInstructionStatement()
 		}
-
 	}
 
 	return nil, nil
@@ -186,7 +191,7 @@ func (p *Parser) parseInstructionStatement() (*ast.InstructionStatement, error) 
 	stmt := &ast.InstructionStatement{Token: p.curTok}
 
 	if !token.IsIdent(p.curTok.Literal) {
-		return nil, newParseError(p.curTok.Literal, token.GetAllInstructions(), p.l.Pos)
+		return nil, newParseError(p.curTok.Literal, []string{"instruction"}, p.l.Pos)
 	}
 
 	stmt.Name = &ast.Identifier{Token: p.curTok, Value: p.curTok.Literal}
@@ -199,7 +204,7 @@ func (p *Parser) parsePushStatement() (*ast.PushStatement, error) {
 	operand := LookupOperand(p.curTok.Literal)
 	stmt.Name = &ast.Identifier{Token: p.curTok, Value: p.curTok.Literal}
 	if !p.expectPeek(token.LPAREN) {
-		return nil, newParseError(p.curTok.Literal, token.GetAllOperands(), p.l.Pos)
+		return nil, newParseError(p.curTok.Literal, []string{"value"}, p.l.Pos)
 	}
 
 	p.nextToken()
@@ -302,7 +307,7 @@ func (p *Parser) parseAssertStatement() (*ast.AssertStatement, error) {
 	operand := LookupOperand(p.curTok.Literal)
 	stmt.Name = &ast.Identifier{Token: p.curTok, Value: p.curTok.Literal}
 	if !p.expectPeek(token.LPAREN) {
-		return nil, nil
+		return nil, newParseError(p.curTok.Literal, []string{"value"}, p.l.Pos)
 	}
 
 	p.nextToken()
@@ -315,14 +320,10 @@ func (p *Parser) parseAddStatement() (*ast.AddStatement, error) {
 	stmt := &ast.AddStatement{Token: p.curTok}
 
 	p.nextToken()
-	operand := LookupOperand(p.curTok.Literal)
 	stmt.Name = &ast.Identifier{Token: p.curTok, Value: p.curTok.Literal}
-	if !p.expectPeek(token.LPAREN) {
-		return nil, nil
+	if p.curTok.Literal != "" {
+		return stmt, newParseError(p.curTok.Literal, []string{"end of instruction"}, p.l.Pos)
 	}
-
-	p.nextToken()
-	p.curTok.Type = operand
 	return stmt, nil
 }
 
@@ -373,6 +374,17 @@ func (p *Parser) parseMulStatement() (*ast.MulStatement, error) {
 
 func (p *Parser) parseModStatement() (*ast.ModStatement, error) {
 	stmt := &ast.ModStatement{Token: p.curTok}
+	stmt.Name = &ast.Identifier{Token: p.curTok, Value: p.curTok.Literal}
+	p.nextToken()
+	if p.curTok.Literal != "" {
+		return stmt, newParseError(p.curTok.Literal, []string{"end of instruction"}, p.l.Pos)
+	}
+
+	return stmt, nil
+}
+
+func (p *Parser) parseDumpStatement() (*ast.DumpStatement, error) {
+	stmt := &ast.DumpStatement{Token: p.curTok}
 	stmt.Name = &ast.Identifier{Token: p.curTok, Value: p.curTok.Literal}
 	p.nextToken()
 	if p.curTok.Literal != "" {

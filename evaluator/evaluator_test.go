@@ -1,7 +1,6 @@
 package evaluator
 
 import (
-	"avm/lexer"
 	"avm/parser"
 	"fmt"
 	"math"
@@ -12,21 +11,22 @@ import (
 
 func TestModOperand(t *testing.T) {
 	tests := []struct {
+		name  string
 		input string
 		a     Value
 		b     Value
 		want  Value
 		fails bool
 	}{
-		{"mod", NewInt32Value(0), NewInt8Value(5), NewInt32Value(0), true},
-		{"mod", NewInt16Value(5), NewInt8Value(2), NewInt16Value(2 % 5), false},
-		{"mod", NewInt16Value(8), NewInt8Value(32), NewInt16Value(32 % 8), false},
-		{"mod", NewInt16Value(8), NewInt8Value(0), NewInt16Value(0), true},
-		{"mod", NewFloatValue(3), NewFloatValue(32.33), NewFloatValue(float32(math.Mod(32.33, 3))), false},
+		{"mod / integer divide by 0 ", "mod", NewInt32Value(0), NewInt8Value(5), NewInt32Value(0), true},
+		{"mod / short with result 0", "mod", NewInt16Value(5), NewInt8Value(2), NewInt16Value(2 % 5), false},
+		{"mod / short ", "mod", NewInt16Value(8), NewInt8Value(32), NewInt16Value(32 % 8), false},
+		{"mod / short divide by 0", "mod", NewInt16Value(8), NewInt8Value(0), NewInt16Value(0), false},
+		{"mod / float ", "mod", NewFloatValue(3), NewFloatValue(32.33), NewFloatValue(float32(math.Mod(32.33, 3))), false},
 	}
 
 	for _, tt := range tests {
-		t.Run("mod evaluator", func(t *testing.T) {
+		t.Run("mod evaluator_"+tt.name, func(t *testing.T) {
 			st := NewStack()
 			st.Push(tt.a)
 			st.Push(tt.b)
@@ -54,7 +54,7 @@ func TestDivOperand(t *testing.T) {
 		{"div", NewInt16Value(5), NewInt8Value(2), NewInt16Value(0), false},
 		{"div", NewInt16Value(8), NewInt8Value(32), NewInt16Value(4), false},
 		{"div", NewInt16Value(8), NewInt8Value(0), NewInt16Value(0), false},
-		{"div", NewFloatValue(3), NewFloatValue(32.33), NewFloatValue(32.33 / 3), false},
+		{"div", NewFloatValue(3), NewFloatValue(32.33), NewFloatValue((32.33 / 3) + 0.000001), false},
 	}
 
 	for _, tt := range tests {
@@ -219,9 +219,8 @@ func TestEvalPushInstruction(t *testing.T) {
 }
 
 func testEval(t *testing.T, input string, st *Stack) (Value, error) {
-	l := lexer.New(input)
-	p := parser.New(l)
-	pg, err := p.ParseProgram()
+	p := parser.NewParser(input)
+	pg, err := p.ParseInstruction()
 	require.NoError(t, err)
 	return st.Eval(pg)
 }

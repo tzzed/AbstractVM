@@ -86,7 +86,6 @@ func (v Value) ConvertToInteger() (int32, error) {
 }
 
 func (v Value) ConvertToFloat() (float32, error) {
-	fmt.Println(v.Type)
 	switch v.Type {
 	case CharValue:
 		return float32(v.V.(int8)), nil

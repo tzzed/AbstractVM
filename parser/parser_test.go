@@ -3,11 +3,38 @@ package parser
 import (
 	"avm/ast"
 	"avm/lexer"
-	"fmt"
 	"github.com/stretchr/testify/require"
 	"strconv"
 	"testing"
 )
+
+func TestDumpStatement(t *testing.T) {
+	tests := []struct {
+		input              string
+		expectedIdentifier string
+		fails              bool
+	}{
+		{"dump", "dump", false},
+		{"dump pop", "", true},
+	}
+
+	for _, tt := range tests {
+		t.Run("dump statement", func(t *testing.T) {
+			l := lexer.New(tt.input)
+			p := NewParser(l)
+			program, err := p.ParseInstruction()
+			if tt.fails {
+				require.Error(t, err)
+				return
+			}
+
+			require.NoError(t, err)
+			stmt := program.Statements[0]
+			testDumpStatement(t, stmt, tt.expectedIdentifier)
+
+		})
+	}
+}
 
 func TestModStatement(t *testing.T) {
 	tests := []struct {
@@ -22,8 +49,8 @@ func TestModStatement(t *testing.T) {
 	for _, tt := range tests {
 		t.Run("mod statement", func(t *testing.T) {
 			l := lexer.New(tt.input)
-			p := New(l)
-			program, err := p.ParseProgram()
+			p := NewParser(l)
+			program, err := p.ParseInstruction()
 			if tt.fails {
 				require.Error(t, err)
 				return
@@ -50,8 +77,8 @@ func TestDivStatement(t *testing.T) {
 	for _, tt := range tests {
 		t.Run("div` statement", func(t *testing.T) {
 			l := lexer.New(tt.input)
-			p := New(l)
-			program, err := p.ParseProgram()
+			p := NewParser(l)
+			program, err := p.ParseInstruction()
 			if tt.fails {
 				require.Error(t, err)
 				return
@@ -78,8 +105,8 @@ func TestMulStatement(t *testing.T) {
 	for _, tt := range tests {
 		t.Run("mul statement", func(t *testing.T) {
 			l := lexer.New(tt.input)
-			p := New(l)
-			program, err := p.ParseProgram()
+			p := NewParser(l)
+			program, err := p.ParseInstruction()
 			if tt.fails {
 				require.Error(t, err)
 				return
@@ -107,8 +134,8 @@ func TestPopStatement(t *testing.T) {
 	for _, tt := range tests {
 		t.Run("pop statement", func(t *testing.T) {
 			l := lexer.New(tt.input)
-			p := New(l)
-			program, err := p.ParseProgram()
+			p := NewParser(l)
+			program, err := p.ParseInstruction()
 			if tt.fails {
 				require.Error(t, err)
 				return
@@ -138,8 +165,8 @@ func TestAssertStatement(t *testing.T) {
 
 	for _, tt := range tests {
 		l := lexer.New(tt.input)
-		p := New(l)
-		program, _ := p.ParseProgram()
+		p := NewParser(l)
+		program, _ := p.ParseInstruction()
 
 		stmt := program.Statements[0]
 		testAssertStatement(t, stmt, tt.expectedIdentifier)
@@ -205,7 +232,7 @@ func TestInstructionsStatement(t *testing.T) {
 	}
 	for _, tt := range tests {
 		l := lexer.New(tt.input)
-		p := New(l)
+		p := NewParser(l)
 		stmt, _ := p.parseInstructionStatement()
 		require.Equal(t, tt.want, stmt.TokenLiteral())
 	}
@@ -229,8 +256,8 @@ func TestPushStatements(t *testing.T) {
 	for _, tt := range tests {
 		t.Run("push statement", func(t *testing.T) {
 			l := lexer.New(tt.input)
-			p := New(l)
-			program, err := p.ParseProgram()
+			p := NewParser(l)
+			program, err := p.ParseInstruction()
 			if tt.fail {
 				require.Error(t, err)
 				return
@@ -296,6 +323,13 @@ func testModStatement(t *testing.T, s ast.Statement, name string) {
 	require.Equal(t, name, mulStmt.Name.TokenLiteral())
 }
 
+func testDumpStatement(t *testing.T, s ast.Statement, name string) {
+	require.Equal(t, "dump", s.TokenLiteral())
+	mulStmt, ok := s.(*ast.DumpStatement)
+	require.True(t, ok)
+	require.Equal(t, name, mulStmt.Name.TokenLiteral())
+}
+
 func testLiteralExpression(
 	t *testing.T,
 	exp ast.Expression,
@@ -315,8 +349,6 @@ func testLiteralExpression(
 		return testDoubleLiteral(t, exp, v)
 	case string:
 		return testIdentifier(t, exp, v)
-	default:
-		fmt.Printf("%T\n", v)
 	}
 	t.Errorf("type of exp not handled. got=%T", exp)
 	return false

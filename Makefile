@@ -8,7 +8,7 @@ all: $(NAME)
 build: $(NAME)
 
 $(NAME):
-	 go install
+	 cd ./cmd/$@ && go install
 
 gen: $(NAME)
 	go generate ./...

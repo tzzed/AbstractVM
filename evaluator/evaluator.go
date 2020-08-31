@@ -66,13 +66,17 @@ func (s *Stack) Dup() {
 	dup := s.head.v
 	s.Push(dup)
 }
-func (s *Stack) Dump() {
+
+// Dump display each value on the stack.
+func (s *Stack) Dump() (Value, error) {
 	tmp := s.head
 	for tmp != nil {
 		fmt.Println(tmp.v)
 		tmp = tmp.next
 	}
 	fmt.Println()
+
+	return Value{}, nil
 }
 
 func (s *Stack) Swap() error {
@@ -154,8 +158,6 @@ func (s *Stack) Eval(node ast.Node) (Value, error) {
 		return s.evalPushStatement(n)
 	case *ast.AddStatement:
 		return s.evalAdd()
-	case *ast.IntegerLiteral:
-		return Value{V: n.IntValue}, nil
 	case *ast.AssertStatement:
 		return s.evalAssert(n)
 	case *ast.MulStatement:
@@ -164,7 +166,10 @@ func (s *Stack) Eval(node ast.Node) (Value, error) {
 		return s.evalDiv()
 	case *ast.ModStatement:
 		return s.evalMod()
-
+	case *ast.DumpStatement:
+		return s.Dump()
+	case *ast.PopStatement:
+		return s.Pop()
 	default:
 		return Value{}, fmt.Errorf("unknown instruction ")
 	}
@@ -263,13 +268,11 @@ func (s *Stack) evalAdd() (Value, error) {
 	case FloatValue:
 		fa, err := a.ConvertToFloat()
 		if err != nil {
-			fmt.Println(fa)
 			return a, err
 		}
 
 		fb, err := b.ConvertToFloat()
 		if err != nil {
-			fmt.Println(fb)
 			return b, err
 		}
 
@@ -381,13 +384,11 @@ func (s *Stack) evalMod() (Value, error) {
 	case FloatValue:
 		fa, err := a.ConvertToFloat()
 		if err != nil {
-			fmt.Println(fa)
 			return a, err
 		}
 
 		fb, err := b.ConvertToFloat()
 		if err != nil {
-			fmt.Println(fb)
 			return b, err
 		}
 
@@ -490,13 +491,11 @@ func (s *Stack) evalDiv() (Value, error) {
 	case FloatValue:
 		fa, err := a.ConvertToFloat()
 		if err != nil {
-			fmt.Println(fa)
 			return a, err
 		}
 
 		fb, err := b.ConvertToFloat()
 		if err != nil {
-			fmt.Println(fb)
 			return b, err
 		}
 
@@ -505,7 +504,6 @@ func (s *Stack) evalDiv() (Value, error) {
 		}
 
 		v := NewFloatValue(fa / fb)
-		fmt.Printf("float: %v / %v = %v\n", fa, fb, v)
 		s.Push(v)
 		return v, nil
 	case DoubleValue:
@@ -587,13 +585,11 @@ func (s *Stack) evalMul() (Value, error) {
 	case FloatValue:
 		fa, err := a.ConvertToFloat()
 		if err != nil {
-			fmt.Println(fa)
 			return a, err
 		}
 
 		fb, err := b.ConvertToFloat()
 		if err != nil {
-			fmt.Println(fb)
 			return b, err
 		}
 
