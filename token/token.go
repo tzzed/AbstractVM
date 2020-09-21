@@ -1,5 +1,6 @@
 package token
 
+// TokenType type of tokens.
 type TokenType string
 
 type Token struct {
@@ -46,6 +47,18 @@ const (
 	FLOAT32 = "float32"
 	FLOAT64 = "float64"
 	DOUBLE  = "double"
+
+	// Operators
+	ASSIGN   = "="
+	PLUS     = "+"
+	MINUS    = "-"
+	BANG     = "!"
+	ASTERISK = "*"
+	SLASH    = "/"
+	LT       = "<"
+	GT       = ">"
+	EQ       = "=="
+	NEQ      = "!="
 )
 
 var keywords = map[string]TokenType{
@@ -70,6 +83,7 @@ var keywords = map[string]TokenType{
 	"double": DOUBLE,
 }
 
+// LookupIdent returns the TokenType associated with the ident keywords.
 func LookupIdent(ident string) TokenType {
 	if tok, ok := keywords[ident]; ok {
 		return tok
@@ -78,6 +92,7 @@ func LookupIdent(ident string) TokenType {
 	return IDENT
 }
 
+// IsIdent check if ident is a keyword.
 func IsIdent(ident string) bool {
 	_, ok := keywords[ident]
 	return ok

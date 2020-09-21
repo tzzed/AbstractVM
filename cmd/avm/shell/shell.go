@@ -23,7 +23,7 @@ const (
 type Shell struct {
 	prompt  string
 	history []string
-	st *evaluator.Stack
+	st      *evaluator.Stack
 }
 
 func (sh *Shell) dumpHistory() error {
@@ -118,7 +118,7 @@ func (sh *Shell) createStack() *evaluator.Stack {
 	return evaluator.NewStack()
 }
 
-func (sh *Shell) execute(in string, ) {
+func (sh *Shell) execute(in string) {
 	sh.history = append(sh.history, in)
 
 	err := sh.executeInput(in)

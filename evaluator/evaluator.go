@@ -150,7 +150,6 @@ func (s *Stack) Peek(index int) (Value, error) {
 }
 
 func (s *Stack) Eval(node ast.Node) (Value, error) {
-
 	switch n := node.(type) {
 	case *ast.Program:
 		return s.evalStatements(n.Statements)
@@ -170,10 +169,53 @@ func (s *Stack) Eval(node ast.Node) (Value, error) {
 		return s.Dump()
 	case *ast.PopStatement:
 		return s.Pop()
+	case *ast.ExpressionStatement:
+		return s.Eval(n.Expression)
+	case *ast.IntegerLiteral:
+		return Value{V: n.IntValue, Type: IntegerValue}, nil
+	case *ast.InfixExpression:
+		left, err := s.Eval(n.Left)
+		if err != nil {
+			return Value{}, err
+		}
+		right, err := s.Eval(n.Right)
+		if err != nil {
+			return Value{}, err
+		}
+		return evalInfixExpression(n.Operator, left, right)
 	default:
 		return Value{}, fmt.Errorf("unknown instruction ")
 	}
 
+}
+
+func evalIntegerInfixExpression(op string, left, right Value) (Value, error) {
+
+	leftVal, err := left.ConvertToInteger()
+	if err != nil {
+		return left, err
+	}
+	rightVal, err := right.ConvertToInteger()
+	if err != nil {
+		return right, err
+	}
+	switch op {
+	case token.PLUS:
+		return NewInt32Value(leftVal + rightVal), nil
+	case token.MINUS:
+		return NewInt32Value(leftVal - rightVal), nil
+
+	case token.ASTERISK:
+		return NewInt32Value(leftVal * rightVal), nil
+	case token.SLASH:
+		return NewInt32Value(leftVal / rightVal), nil
+	default:
+		return Value{}, fmt.Errorf("no infix evaluator for %q\n", op)
+	}
+}
+
+func evalInfixExpression(op string, left, right Value) (Value, error) {
+	return evalIntegerInfixExpression(op, left, right)
 }
 
 func (s *Stack) evalStatements(stmts []ast.Statement) (Value, error) { return s.Eval(stmts[0]) }
@@ -206,11 +248,24 @@ func convertAstToValue(n string, expr ast.Expression) (Value, error) {
 }
 
 func (s *Stack) evalPushStatement(stmt *ast.PushStatement) (Value, error) {
+	fmt.Printf("Here: %T\n", stmt.Value)
+	v := Value{}
+	var err error
+	switch stmt.Value.(type) {
+	case *ast.InfixExpression:
+		v, err = s.Eval(stmt.Value)
+		if err != nil {
+			return Value{}, err
+		}
+		break
+	default:
+		v, err = convertAstToValue(stmt.Name.String(), stmt.Value)
+		if err != nil {
+			return Value{}, err
+		}
 
-	v, err := convertAstToValue(stmt.Name.String(), stmt.Value)
-	if err != nil {
-		return Value{}, err
 	}
+
 
 	s.Push(v)
 	return v, nil
@@ -299,15 +354,30 @@ func (s *Stack) evalAdd() (Value, error) {
 }
 
 func (s *Stack) evalAssert(stmt *ast.AssertStatement) (Value, error) {
+	fmt.Printf("Here: %T\n", stmt.Value)
+	v := Value{}
+	var err error
+	switch stmt.Value.(type) {
+	case *ast.InfixExpression:
+		v, err = s.Eval(stmt.Value)
+		if err != nil {
+			return Value{}, err
+		}
+		break
+	default:
+		v, err = convertAstToValue(stmt.Name.String(), stmt.Value)
+		if err != nil {
+			return Value{}, err
+		}
+
+	}
+
+	fmt.Printf("left:: %v  \n", v)
 	if s.IsEmpty() {
 		return Value{}, errors.New("cannot check value empty stack")
 	}
 
 	res := s.head
-	v, err := convertAstToValue(stmt.Name.String(), stmt.Value)
-	if err != nil {
-		return Value{}, err
-	}
 
 	if res.v.V == v.V && res.v.Type == v.Type {
 		return v, nil

@@ -195,7 +195,7 @@ func TestEvalPushInstruction(t *testing.T) {
 		input string
 		want  Value
 	}{
-		{"push int32(5)", NewInt32Value(5)},
+		{"push int32(5 * 3)", NewInt32Value(15)},
 		{"push int16(5)", NewInt16Value(5)},
 		{"push int8(5)", NewInt8Value(5)},
 		{"push float(5.5)", NewFloatValue(5.5)},
@@ -216,6 +216,28 @@ func TestEvalPushInstruction(t *testing.T) {
 	}
 
 	require.Equal(t, len(tests), st.size)
+}
+
+func TestEvalIntegerExpression(t *testing.T) {
+	tests := []struct {
+		in   string
+		want Value
+	}{
+		{"assert int32(2 * (5 + 10))", NewInt32Value(30)},
+	}
+
+	for _, tt := range tests {
+		st := NewStack()
+		st.Push(tt.want)
+		evaluated, err := testEval(t, tt.in, st)
+		require.NoError(t, err)
+		testIntegerObject(t, evaluated, tt.want)
+	}
+}
+
+func testIntegerObject(t *testing.T, v Value, want Value) {
+	require.Equal(t, want.Type.String(), v.Type.String())
+	require.Equal(t, want.V, v.V)
 }
 
 func testEval(t *testing.T, input string, st *Stack) (Value, error) {

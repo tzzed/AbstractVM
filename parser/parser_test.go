@@ -2,11 +2,70 @@ package parser
 
 import (
 	"avm/ast"
-	"avm/lexer"
 	"github.com/stretchr/testify/require"
 	"strconv"
 	"testing"
 )
+
+func TestPrefixExpression(t *testing.T) {
+	prefixTests := []struct {
+		input    string
+		operator string
+		value    float64
+	}{
+		{"-15;", "-", 15},
+	}
+
+	for _, tt := range prefixTests {
+
+		p := NewParser(tt.input)
+		program, err := p.ParseInstruction()
+		require.NoError(t, err)
+		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+		require.True(t, ok)
+
+		exp, ok := stmt.Expression.(*ast.PrefixExpression)
+		require.True(t, ok)
+
+		require.Equal(t, tt.operator, exp.Operator)
+		require.True(t, testDoubleLiteral(t, exp.Right, tt.value))
+	}
+}
+
+func TestParsingInfixExpressions(t *testing.T) {
+	infixTests := []struct {
+		in         string
+		leftValue  interface{}
+		operator   string
+		rightValue interface{}
+	}{
+		{"5 + 5", 5, "+", 5},
+		{"5 - 5", 5, "-", 5},
+		{"5 * 5;", 5, "*", 5},
+		{"5 / 5;", 5, "/", 5},
+		{"(5 / 5);", 5, "/", 5},
+	}
+
+	for _, tt := range infixTests {
+		p := NewParser(tt.in)
+		pg, err := p.ParseInstruction()
+		require.NoError(t, err)
+		stmt, ok := pg.Statements[0].(*ast.ExpressionStatement)
+		require.True(t, ok)
+		require.True(t, testInfixExpression(t, stmt.Expression, tt.leftValue, tt.operator, tt.rightValue))
+	}
+}
+
+func testInfixExpression(t *testing.T, exp ast.Expression, left interface{},
+	operator string, right interface{}) bool {
+
+	opExp, ok := exp.(*ast.InfixExpression)
+	require.True(t, ok)
+	require.True(t, testLiteralExpression(t, opExp.Left, left))
+	require.Equal(t, opExp.Operator, operator)
+	require.True(t, testLiteralExpression(t, opExp.Right, right))
+	return true
+}
 
 func TestDumpStatement(t *testing.T) {
 	tests := []struct {
@@ -20,8 +79,7 @@ func TestDumpStatement(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run("dump statement", func(t *testing.T) {
-			l := lexer.New(tt.input)
-			p := NewParser(l)
+			p := NewParser(tt.input)
 			program, err := p.ParseInstruction()
 			if tt.fails {
 				require.Error(t, err)
@@ -48,8 +106,7 @@ func TestModStatement(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run("mod statement", func(t *testing.T) {
-			l := lexer.New(tt.input)
-			p := NewParser(l)
+			p := NewParser(tt.input)
 			program, err := p.ParseInstruction()
 			if tt.fails {
 				require.Error(t, err)
@@ -76,8 +133,7 @@ func TestDivStatement(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run("div` statement", func(t *testing.T) {
-			l := lexer.New(tt.input)
-			p := NewParser(l)
+			p := NewParser(tt.input)
 			program, err := p.ParseInstruction()
 			if tt.fails {
 				require.Error(t, err)
@@ -104,8 +160,7 @@ func TestMulStatement(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run("mul statement", func(t *testing.T) {
-			l := lexer.New(tt.input)
-			p := NewParser(l)
+			p := NewParser(tt.input)
 			program, err := p.ParseInstruction()
 			if tt.fails {
 				require.Error(t, err)
@@ -133,8 +188,7 @@ func TestPopStatement(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run("pop statement", func(t *testing.T) {
-			l := lexer.New(tt.input)
-			p := NewParser(l)
+			p := NewParser(tt.input)
 			program, err := p.ParseInstruction()
 			if tt.fails {
 				require.Error(t, err)
@@ -156,7 +210,7 @@ func TestAssertStatement(t *testing.T) {
 		expectedIdentifier string
 		expectedValue      interface{}
 	}{
-		{"assert int8(42)", "int8", int8(42)},
+		{"assert int8(21 + 21)", "int8", int8(42)},
 		{"assert int16(42)", "int16", int16(42)},
 		{"assert int32(42)", "int32", int32(42)},
 		{"assert float(42.42)", "float", float32(42.42)},
@@ -164,15 +218,15 @@ func TestAssertStatement(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		l := lexer.New(tt.input)
-		p := NewParser(l)
-		program, _ := p.ParseInstruction()
-
-		stmt := program.Statements[0]
+		p := NewParser(tt.input)
+		program, err := p.ParseInstruction()
+		require.NoError(t, err)
+		stmt, ok := program.Statements[0].(*ast.AssertStatement)
+		require.True(t, ok)
 		testAssertStatement(t, stmt, tt.expectedIdentifier)
-
-		val := stmt.(*ast.AssertStatement).Value
+		val := stmt.Value
 		testLiteralExpression(t, val, tt.expectedValue)
+
 	}
 }
 
@@ -231,8 +285,7 @@ func TestInstructionsStatement(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		l := lexer.New(tt.input)
-		p := NewParser(l)
+		p := NewParser(tt.input)
 		stmt, _ := p.parseInstructionStatement()
 		require.Equal(t, tt.want, stmt.TokenLiteral())
 	}
@@ -255,8 +308,7 @@ func TestPushStatements(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run("push statement", func(t *testing.T) {
-			l := lexer.New(tt.input)
-			p := NewParser(l)
+			p := NewParser(tt.input)
 			program, err := p.ParseInstruction()
 			if tt.fail {
 				require.Error(t, err)
@@ -275,7 +327,6 @@ func TestPushStatements(t *testing.T) {
 		})
 
 	}
-
 }
 func testPushStatement(t *testing.T, s ast.Statement, name string) bool {
 	require.Equal(t, "push", s.TokenLiteral())
@@ -288,7 +339,6 @@ func testPushStatement(t *testing.T, s ast.Statement, name string) bool {
 }
 
 func testAssertStatement(t *testing.T, s ast.Statement, name string) {
-	require.Equal(t, "assert", s.TokenLiteral())
 	asStmt, ok := s.(*ast.AssertStatement)
 	require.True(t, ok)
 	require.Equal(t, name, asStmt.Name.Value)
@@ -335,7 +385,6 @@ func testLiteralExpression(
 	exp ast.Expression,
 	expected interface{},
 ) bool {
-
 	switch v := expected.(type) {
 	case int8:
 		return testByteLiteral(t, exp, v)
@@ -343,6 +392,8 @@ func testLiteralExpression(
 		return testShortLiteral(t, exp, v)
 	case int32:
 		return testIntegerLiteral(t, exp, v)
+	case int:
+		return testIntegerLiteral(t, exp, int32(v))
 	case float32:
 		return testFloatLiteral(t, exp, v)
 	case float64:
