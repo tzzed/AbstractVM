@@ -288,7 +288,7 @@ func (p *Parser) parseExpression(precedence int) (ast.Expression, error) {
 			return leftExpr, err
 		}
 	}
-	
+
 	return leftExpr, nil
 }
 
@@ -323,8 +323,6 @@ func (p *Parser) parseInfixExpression(left ast.Expression) (ast.Expression, erro
 	if err != nil {
 		return nil, err
 	}
-
-
 
 	return expr, nil
 }

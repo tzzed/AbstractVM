@@ -34,9 +34,11 @@ func TestModOperand(t *testing.T) {
 			if tt.fails {
 				require.Error(t, err)
 				return
-			} else {
-				require.Equal(t, tt.want.V, ev.V)
 			}
+			require.NoError(t, err)
+			
+			require.Equal(t, tt.want.V, ev.V)
+			
 		})
 
 	}

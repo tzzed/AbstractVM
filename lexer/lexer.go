@@ -8,7 +8,7 @@ import (
 type Lexer struct {
 	in      string
 	Pos     int // current position (points to current char)
-	readPos int // current reading position in input. Always point to the next char int the input
+	readPos int // current reading position in input. Always point to the next char in the input
 	ch      byte
 }
 
@@ -30,6 +30,7 @@ func (l *Lexer) scan() {
 	l.readPos++
 }
 
+// NextToken returns the token
 func (l *Lexer) NextToken() token.Token {
 	var tok token.Token
 

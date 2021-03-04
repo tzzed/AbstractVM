@@ -467,6 +467,7 @@ func (s *Stack) evalMod() (Value, error) {
 		}
 
 		f := math.Mod(float64(fa), float64(fb))
+		f = math.Round(f * math.Pow10(2)) / math.Pow10(2)
 		v := NewFloatValue(float32(f))
 		s.Push(v)
 		return v, nil
